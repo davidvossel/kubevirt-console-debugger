@@ -17,7 +17,7 @@ spec:
     - $namespace
     stdin: true
     tty: true 
-    image: quay.io/dvossel/vmi-console-debug:latest
+    image: quay.io/dvossel/kubevirt-console-debugger:latest
     imagePullPolicy: Always
     name: dbug
     securityContext:
@@ -26,6 +26,9 @@ spec:
         drop:
         - ALL
   restartPolicy: Always
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
   serviceAccount: vmi-console-debug
   serviceAccountName: vmi-console-debug
 EOF
@@ -71,7 +74,7 @@ while true; do
 	while read -r  line; do
 		VM_NAME=$(echo $line | awk '{print $2}')
 		VM_NAMESPACE=$(echo $line | awk '{print $1}')
-		echo "------------------------START----------------------------------"
+		echo "------------------------BEGIN----------------------------------"
 		echo "processing debug pod for vm $VM_NAME at namespace $VM_NAMESPACE"
 		apply_rbac $VM_NAMESPACE
 		apply_pod $VM_NAMESPACE $VM_NAME

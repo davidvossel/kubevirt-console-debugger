@@ -74,5 +74,8 @@ spec:
             drop:
             - ALL
       restartPolicy: Always
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccount: vm-console-debug-launcher
       serviceAccountName: vm-console-debug-launcher
