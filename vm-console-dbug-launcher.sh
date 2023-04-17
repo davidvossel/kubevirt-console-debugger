@@ -28,7 +28,7 @@ spec:
   restartPolicy: Always
   securityContext:
     runAsNonRoot: true
-    runAsUser: 1000680001
+    runAsUser: 1000690001
     seccompProfile:
       type: RuntimeDefault
   serviceAccount: vmi-console-debug

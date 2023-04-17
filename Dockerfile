@@ -7,7 +7,7 @@ RUN cd /usr/bin && \
 	chmod 755 kubectl && \
 	mkdir /manifests
 
-COPY console-launcher.yaml /manifests/console-launcher.yaml
+COPY kubevirt-console-logger.yaml /manifests/kubevirt-console-logger.yaml
 COPY entrypoint.sh /usr/bin/entrypoint.sh
 COPY vm-console-dbug-launcher.sh /usr/bin/vm-console-dbug-launcher.sh
 
