@@ -2,6 +2,10 @@
 apiVersion: v1
 kind: Namespace
 metadata:
+  annotations:
+    openshift.io/sa.scc.mcs: s0:c27,c4
+    openshift.io/sa.scc.supplemental-groups: 1000710000/10000
+    openshift.io/sa.scc.uid-range: 1000710000/10000
   name: vm-logger
 ---
 apiVersion: v1
@@ -70,10 +74,5 @@ spec:
             drop:
             - ALL
       restartPolicy: Always
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000690001
-        seccompProfile:
-          type: RuntimeDefault
       serviceAccount: vm-console-debug-launcher
       serviceAccountName: vm-console-debug-launcher

@@ -26,11 +26,6 @@ spec:
         drop:
         - ALL
   restartPolicy: Always
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000690001
-    seccompProfile:
-      type: RuntimeDefault
   serviceAccount: vmi-console-debug
   serviceAccountName: vmi-console-debug
 EOF
