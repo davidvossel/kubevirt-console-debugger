@@ -68,12 +68,17 @@ spec:
         image: quay.io/dvossel/kubevirt-console-debugger:latest
         imagePullPolicy: Always
         name: dbug
+        resources:
+          requests:
+            cpu: 10m
+            memory: 100Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
             - ALL
       restartPolicy: Always
+      imagePullPolicy: IfNotPresent
       securityContext:
         seccompProfile:
           type: RuntimeDefault
