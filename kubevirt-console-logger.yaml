@@ -78,7 +78,6 @@ spec:
             drop:
             - ALL
       restartPolicy: Always
-      imagePullPolicy: IfNotPresent
       securityContext:
         seccompProfile:
           type: RuntimeDefault

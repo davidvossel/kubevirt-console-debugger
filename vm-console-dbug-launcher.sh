@@ -18,7 +18,7 @@ spec:
     stdin: true
     tty: true 
     image: quay.io/dvossel/kubevirt-console-debugger:latest
-    imagePullPolicy: Always
+    imagePullPolicy: IfNotPresent
     name: dbug
     resources:
       requests:
@@ -30,7 +30,6 @@ spec:
         drop:
         - ALL
   restartPolicy: Always
-  imagePullPolicy: IfNotPresent
   securityContext:
     seccompProfile:
       type: RuntimeDefault
