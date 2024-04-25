@@ -14,7 +14,11 @@ import (
 	"kubevirt.io/client-go/kubecli"
 )
 
-func attachConsole(stdinReader, stdoutReader *io.PipeReader, stdinWriter, stdoutWriter *io.PipeWriter, message string, resChan <-chan error) (err error) {
+func attachConsole(stdinReader, stdoutReader *io.PipeReader,
+	stdinWriter, stdoutWriter *io.PipeWriter,
+	message string, resChan <-chan error,
+	autoResponder map[string]string) (err error) {
+
 	stopChan := make(chan struct{}, 1)
 	writeStop := make(chan error)
 	readStop := make(chan error)
@@ -37,11 +41,11 @@ func attachConsole(stdinReader, stdoutReader *io.PipeReader, stdinWriter, stdout
 		close(stopChan)
 	}()
 
+	// read output from console
 	go func() {
 		buf := make([]byte, 1024, 1024)
 		line := ""
 		for {
-			// reading from stdin
 			n, err := stdoutReader.Read(buf)
 			if err != nil && err != io.EOF {
 				readStop <- err
@@ -55,7 +59,17 @@ func attachConsole(stdinReader, stdoutReader *io.PipeReader, stdinWriter, stdout
 			for i, str := range split {
 				line = line + str
 				if i != len(split)-1 {
-					fmt.Printf("--- DEBUG NEW LINE: %s\n", line)
+					//fmt.Printf("--- DEBUG NEW LINE: %s\n", line)
+					for key, val := range autoResponder {
+						if strings.Contains(line, key) {
+							// Writing auto response
+							_, err = stdinWriter.Write([]byte(val))
+							if err == io.EOF {
+								readStop <- err
+								return
+							}
+						}
+					}
 					line = ""
 				}
 			}
@@ -69,6 +83,7 @@ func attachConsole(stdinReader, stdoutReader *io.PipeReader, stdinWriter, stdout
 
 	}()
 
+	// write input to console
 	go func() {
 		defer close(writeStop)
 		buf := make([]byte, 1024, 1024)
@@ -158,9 +173,16 @@ func run(args []string) error {
 			return err
 		}
 	}
+
+	autoResponses := map[string]string{}
+
+	autoResponses["login"] = "core\n"
+	autoResponses["password"] = "core\n"
+
 	err = attachConsole(stdinReader, stdoutReader, stdinWriter, stdoutWriter,
 		fmt.Sprint("Successfully connected to ", vmi, " console. The escape sequence is ^]\n"),
-		resChan)
+		resChan,
+		autoResponses)
 
 	if err != nil {
 		if e, ok := err.(*websocket.CloseError); ok && e.Code == websocket.CloseAbnormalClosure {
