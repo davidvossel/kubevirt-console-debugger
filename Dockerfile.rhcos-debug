@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1.4
+
+ARG builder_image=golang:1.21
+FROM ${builder_image} as builder
+WORKDIR /workspace
+
+# Copy the sources
+COPY ./ ./
+
+# Build
+ARG ARCH=amd64
+ARG ldflags
+
+# Do not force rebuild of up-to-date packages (do not use -a) and use the compiler cache folder
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} \
+    go build -a -ldflags "${ldflags} -extldflags '-static'"  .
+
+# Production image
+FROM quay.io/fedora/fedora:38
+
+RUN cd /usr/bin && \
+	curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+	chmod 755 kubectl && \
+	mkdir /manifests
+
+COPY rhcos-console-logger.yaml /manifests/rhcos-console-logger.yaml
+COPY rhcos-entrypoint.sh /usr/bin/rhcos-entrypoint.sh
+COPY rhcos-console-dbug-launcher.sh /usr/bin/rhcos-console-dbug-launcher.sh
+COPY --from=builder /workspace/rhcos-console-debugger /usr/bin/rhcos-console-debugger
+
+ENTRYPOINT ["/usr/bin/rhcos-entrypoint.sh"]
+
