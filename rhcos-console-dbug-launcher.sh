@@ -18,7 +18,7 @@ spec:
     stdin: true
     tty: true 
     image: quay.io/dvossel/kubevirt-console-debugger:rhcos
-    imagePullPolicy: IfNotPresent
+    imagePullPolicy: Always
     name: dbug
     resources:
       requests:
