@@ -1,28 +1,19 @@
 # syntax=docker/dockerfile:1.4
 
-
 ARG builder_image=golang:1.21
 FROM ${builder_image} as builder
 WORKDIR /workspace
 
-# Run this with docker build --build-arg goproxy=$(go env GOPROXY) to override the goproxy
-ARG goproxy=https://proxy.golang.org
-ENV GOPROXY=$goproxy
-
-# Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
-
-# Cache deps before building and copying source so that we don't need to re-download as much
-# and so that source changes don't invalidate our downloaded layer
-RUN --mount=type=cache,target=/go/pkg/mod \
-    go mod download
-
 # Copy the sources
 COPY ./ ./
 
-RUN make build .
+# Build
+ARG ARCH=amd64
+ARG ldflags
 
+# Do not force rebuild of up-to-date packages (do not use -a) and use the compiler cache folder
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} \
+    go build -a -ldflags "${ldflags} -extldflags '-static'"  .
 
 # Production image
 FROM quay.io/fedora/fedora:38
