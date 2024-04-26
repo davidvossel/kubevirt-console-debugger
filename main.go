@@ -14,13 +14,6 @@ import (
 	"kubevirt.io/client-go/kubecli"
 )
 
-/*
-type autoResponses struct {
-
-
-}
-*/
-
 func attachConsole(stdinReader, stdoutReader *io.PipeReader,
 	stdinWriter, stdoutWriter *io.PipeWriter,
 	message string, resChan <-chan error,
@@ -81,6 +74,8 @@ func attachConsole(stdinReader, stdoutReader *io.PipeReader,
 							readStop <- err
 							return
 						}
+						// ensure we only attempt the response once, so we don't get into a loop if no console password is set
+						delete(autoResponder, key)
 						// clear the line if a match occurs
 						line = ""
 					}
