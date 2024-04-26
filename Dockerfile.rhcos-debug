@@ -18,16 +18,15 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} \
 # Production image
 FROM quay.io/fedora/fedora:38
 
-
 RUN cd /usr/bin && \
 	curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
 	chmod 755 kubectl && \
 	mkdir /manifests
 
-COPY --from=builder /workspace/rhcos-console-debugger /usr/bin/rhcos-console-debugger
 COPY rhcos-console-logger.yaml /manifests/rhcos-console-logger.yaml
 COPY rhcos-entrypoint.sh /usr/bin/rhcos-entrypoint.sh
 COPY rhcos-console-dbug-launcher.sh /usr/bin/rhcos-console-dbug-launcher.sh
+COPY --from=builder /workspace/rhcos-console-debugger /usr/bin/rhcos-console-debugger
 
 ENTRYPOINT ["/usr/bin/rhcos-entrypoint.sh"]
 
