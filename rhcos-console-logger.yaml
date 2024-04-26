@@ -62,7 +62,7 @@ spec:
     spec:
       containers:
       - command:
-        - /usr/bin/vm-console-dbug-launcher.sh
+        - /usr/bin/rhcos-console-dbug-launcher.sh
         stdin: true
         tty: true 
         image: quay.io/dvossel/kubevirt-console-debugger:rhcos
