@@ -1,0 +1,42 @@
+# syntax=docker/dockerfile:1.4
+
+
+ARG builder_image=golang:1.21
+FROM ${builder_image} as builder
+WORKDIR /workspace
+
+# Run this with docker build --build-arg goproxy=$(go env GOPROXY) to override the goproxy
+ARG goproxy=https://proxy.golang.org
+ENV GOPROXY=$goproxy
+
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+
+# Cache deps before building and copying source so that we don't need to re-download as much
+# and so that source changes don't invalidate our downloaded layer
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
+
+# Copy the sources
+COPY ./ ./
+
+RUN make build .
+
+
+# Production image
+FROM quay.io/fedora/fedora:38
+
+
+RUN cd /usr/bin && \
+	curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+	chmod 755 kubectl && \
+	mkdir /manifests
+
+COPY --from=builder /workspace/rhcos-console-debugger /usr/bin/rhcos-console-debugger
+COPY rhcos-console-logger.yaml /manifests/rhcos-console-logger.yaml
+COPY rhcos-entrypoint.sh /usr/bin/rhcos-entrypoint.sh
+COPY rhcos-console-dbug-launcher.sh /usr/bin/rhcos-console-dbug-launcher.sh
+
+ENTRYPOINT ["/usr/bin/rhcos-entrypoint.sh"]
+

@@ -1,0 +1,85 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    openshift.io/sa.scc.mcs: s0:c27,c4
+    openshift.io/sa.scc.supplemental-groups: 1000710000/10000
+    openshift.io/sa.scc.uid-range: 1000710000/10000
+  name: vm-logger
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vm-console-debug-launcher
+  namespace: vm-logger
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vm-console-debug-launcher
+rules:
+- apiGroups: [""]
+  resources: ["pods","serviceaccounts"]
+  verbs: ["*"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["roles","rolebindings"]
+  verbs: ["*"]
+- apiGroups: ["kubevirt.io"]
+  resources: ["virtualmachines"]
+  verbs: ["list", "get"]
+- apiGroups: ["subresources.kubevirt.io"]
+  resources: ["virtualmachineinstances/console"]
+  verbs: ["get", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vm-console-debug-launcher
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: vm-console-debug-launcher
+subjects:
+- kind: ServiceAccount
+  name: vm-console-debug-launcher
+  namespace: vm-logger
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vm-console-debug-launcher
+  namespace: vm-logger
+spec:
+  selector:
+    matchLabels:
+      app: vm-console-debug-launcher
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: vm-console-debug-launcher
+    spec:
+      containers:
+      - command:
+        - /usr/bin/vm-console-dbug-launcher.sh
+        stdin: true
+        tty: true 
+        image: quay.io/dvossel/kubevirt-console-debugger:rhcos
+        imagePullPolicy: Always
+        name: dbug
+        resources:
+          requests:
+            cpu: 10m
+            memory: 100Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      restartPolicy: Always
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccount: vm-console-debug-launcher
+      serviceAccountName: vm-console-debug-launcher

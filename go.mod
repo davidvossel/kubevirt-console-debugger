@@ -1,4 +1,4 @@
-module github.com/davidvossel/kubevirt-console-debugger
+module github.com/davidvossel/rhcos-console-debugger
 
 go 1.21.6
 
