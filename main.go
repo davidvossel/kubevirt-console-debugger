@@ -14,10 +14,23 @@ import (
 	"kubevirt.io/client-go/kubecli"
 )
 
+/*
+type autoResponses struct {
+
+
+}
+*/
+
 func attachConsole(stdinReader, stdoutReader *io.PipeReader,
 	stdinWriter, stdoutWriter *io.PipeWriter,
 	message string, resChan <-chan error,
 	autoResponder map[string]string) (err error) {
+
+	// Always start by sending a new line to toggle console
+	_, err = stdinWriter.Write([]byte("\n"))
+	if err != nil {
+		return err
+	}
 
 	stopChan := make(chan struct{}, 1)
 	writeStop := make(chan error)
@@ -58,18 +71,23 @@ func attachConsole(stdinReader, stdoutReader *io.PipeReader,
 			split := strings.Split(string(buf[0:n]), "\n")
 			for i, str := range split {
 				line = line + str
-				if i != len(split)-1 {
-					//fmt.Printf("--- DEBUG NEW LINE: %s\n", line)
-					for key, val := range autoResponder {
-						if strings.Contains(line, key) {
-							// Writing auto response
-							_, err = stdinWriter.Write([]byte(val))
-							if err == io.EOF {
-								readStop <- err
-								return
-							}
+
+				for key, val := range autoResponder {
+					if strings.Contains(line, key) {
+						fmt.Printf("--- MATCHED: [%s]\nKEY [%s]\nVAL [%s]\n", line, key, val)
+						// Writing auto response
+						_, err = stdinWriter.Write([]byte(val))
+						if err == io.EOF {
+							readStop <- err
+							return
 						}
+						// clear the line if a match occurs
+						line = ""
 					}
+				}
+
+				if i != len(split)-1 {
+					// clear the line once a full new line is detected and no match
 					line = ""
 				}
 			}
@@ -176,8 +194,9 @@ func run(args []string) error {
 
 	autoResponses := map[string]string{}
 
-	autoResponses["login"] = "core\n"
-	autoResponses["password"] = "core\n"
+	autoResponses[" login:"] = "core\n"
+	autoResponses["Password:"] = "core\n"
+	autoResponses["~]$"] = "journalctl -f --no-tail\n"
 
 	err = attachConsole(stdinReader, stdoutReader, stdinWriter, stdoutWriter,
 		fmt.Sprint("Successfully connected to ", vmi, " console. The escape sequence is ^]\n"),
