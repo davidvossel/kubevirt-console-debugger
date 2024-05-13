@@ -203,6 +203,8 @@ func run(args []string) error {
 			fmt.Fprint(os.Stderr, "\nYou were disconnected from the console. This has one of the following reasons:"+
 				"\n - another user connected to the console of the target vm"+
 				"\n - network issues\n")
+		} else {
+			fmt.Fprint(os.Stderr, "\nVirt Console Disconnection Reason: %v\n", err)
 		}
 		return err
 	}
